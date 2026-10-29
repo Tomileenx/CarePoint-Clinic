@@ -33,7 +33,7 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
     );
   }
 
-  const active = groups.find((g) => g.key === activeKey) ?? groups[0];
+  const active = groups.find((g) => g.key === activeKey) ?? groups[0]!;
 
   return (
     <div>
@@ -53,7 +53,7 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
               }`}
             >
               <span className={`text-sm font-semibold ${isActive ? "text-primary" : "text-foreground"}`}>
-                {formatShortDate(g.slots[0].startTime)}
+                {formatShortDate(g.slots[0]!.startTime)}
               </span>
               <span className="text-xs text-muted-foreground">{free === 0 ? "Fully booked" : `${free} available`}</span>
             </button>
@@ -62,7 +62,7 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
       </div>
 
       <div role="tabpanel" className="mt-4">
-        <h3 className="mb-3 text-sm font-medium text-muted-foreground">{formatDate(active.slots[0].startTime)}</h3>
+        <h3 className="mb-3 text-sm font-medium text-muted-foreground">{formatDate(active.slots[0]!.startTime)}</h3>
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {active.slots.map((s) => {
             const selected = s.id === selectedId;

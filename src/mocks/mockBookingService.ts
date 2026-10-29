@@ -48,8 +48,8 @@ function seed(slot: AppointmentSlot, name: string, status: BookingResponse["stat
   bookings.set(b.id, b);
 }
 const unavailable = slots.filter((s) => !s.available);
-seed(unavailable[0], "Demo Patient A", "CONFIRMED");
-seed(unavailable[1], "Demo Patient B", "CANCELLED");
+seed(unavailable[0]!, "Demo Patient A", "CONFIRMED");
+seed(unavailable[1]!, "Demo Patient B", "CANCELLED");
 
 export const demoReferences = ["DEMO-1001", "DEMO-1002"];
 
