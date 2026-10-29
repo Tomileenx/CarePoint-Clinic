@@ -5,9 +5,9 @@
 
 export type ApiMode = "mock" | "api";
 
-export const apiMode: ApiMode = import.meta.env.VITE_API_MODE === "api" ? "api" : "mock";
+export const apiMode: ApiMode = import.meta.env["VITE_API_MODE"] === "api" ? "api" : "mock";
 
 export const apiBaseUrl: string | undefined =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, "") || undefined;
+  (import.meta.env["VITE_API_BASE_URL"] as string | undefined)?.replace(/\/+$/, "") || undefined;
 
 export const isMockMode = apiMode === "mock";
