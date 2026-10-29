@@ -80,9 +80,9 @@ export function SiteFooter() {
           </p>
         </div>
         <div className="space-y-1 sm:text-right">
-          <p>Address: [Clinic address]</p>
-          <p>Phone: [Clinic phone]</p>
-          <p>Email: [Clinic email]</p>
+          <p>Address: 5, Bosun-Bookoing, Lagos</p>
+          <p>Phone: 09066438016</p>
+          <p>Email: carepointclinic@mail.com</p>
         </div>
       </div>
     </footer>
