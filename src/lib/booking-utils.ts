@@ -4,7 +4,7 @@ export interface BookingFormValues {
   patientName: string;
   patientEmail: string;
 }
-export type BookingFormErrors = Partial<Record<keyof BookingFormValues | "slot", string>>;
+export type BookingFormErrors = { [K in keyof BookingFormValues | "slot"]?: string | undefined };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 

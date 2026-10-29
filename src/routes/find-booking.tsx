@@ -3,7 +3,7 @@ import { FindBookingPage } from "@/pages/FindBookingPage";
 
 export const Route = createFileRoute("/find-booking")({
   validateSearch: (s: Record<string, unknown>): { ref?: string } =>
-    typeof s.ref === "string" && s.ref ? { ref: s.ref } : {},
+    typeof s["ref"] === "string" && s["ref"] ? { ref: s["ref"] } : {},
   head: () => ({
     meta: [
       { title: "Find Your Booking — CarePoint Clinic" },
@@ -17,5 +17,5 @@ export const Route = createFileRoute("/find-booking")({
 
 function FindBookingRoute() {
   const { ref } = Route.useSearch();
-  return <FindBookingPage initialRef={ref} />;
+  return <FindBookingPage {...(ref ? { initialRef: ref } : {})} />;
 }
