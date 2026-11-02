@@ -1,8 +1,7 @@
-import { AlertCircle, FlaskConical, RotateCw } from "lucide-react";
+import { AlertCircle, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { BookingStatus } from "@/types/booking";
 import { ApiError } from "@/services/apiClient";
-import { isMockMode } from "@/services/config";
 
 export function errorMessage(err: unknown) {
   return err instanceof ApiError ? err.message : "Something unexpected happened. Please try again.";
@@ -22,16 +21,6 @@ export function ErrorNotice({ error, onRetry, title }: { error: unknown; onRetry
           <RotateCw /> Try again
         </Button>
       )}
-    </div>
-  );
-}
-
-export function DemoBanner({ children }: { children?: React.ReactNode }) {
-  if (!isMockMode) return null;
-  return (
-    <div className="flex items-start gap-2 rounded-lg border border-warning-foreground/20 bg-warning-soft px-3 py-2 text-sm text-warning-foreground">
-      <FlaskConical className="mt-0.5 size-4 shrink-0" aria-hidden />
-      <p>{children ?? "Demo mode: sample data only. Nothing is saved and it resets when the page reloads."}</p>
     </div>
   );
 }
