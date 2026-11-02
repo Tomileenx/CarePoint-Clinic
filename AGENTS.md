@@ -10,6 +10,6 @@
 <!-- LOVABLE:END -->
 
 ## Architecture
-- Frontend only; booking data comes through `src/services/bookingService.ts`, which picks the in-memory mock (`src/mocks/`) or HTTP client by `VITE_API_MODE`. Why: the Java backend is built separately and must be swappable.
-- All HTTP and error mapping lives in `src/services/apiClient.ts`; components never call fetch. Why: auth can be added in one place later.
+- Booking data comes only from the external Spring Boot API via validated server functions in `src/lib/booking-api.functions.ts`, which attach `X-API-Key` from the `BOOKING_API_KEY` secret. Why: the key must never reach the browser; no mock data.
+- All HTTP and error mapping lives in `src/services/apiClient.ts` (unwraps proxy results); components never call fetch. Why: one place for error handling.
 - No localStorage/sessionStorage persistence and no secrets in `VITE_` vars. Why: assessment requirements.

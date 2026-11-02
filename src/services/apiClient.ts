@@ -62,7 +62,14 @@ export async function unwrap<T>(call: Promise<ProxyResult>): Promise<T | undefin
   } catch {
     throw new ApiError("network", "We couldn't reach the booking service. Check your connection and try again.");
   }
-  if (res.ok) return res.body as T | undefined;
+  if (res.ok) {
+    if (!res.json) return undefined;
+    try {
+      return JSON.parse(res.json) as T;
+    } catch {
+      throw new ApiError("server", "The booking service returned an unreadable response.");
+    }
+  }
   if (res.code === "CONFIG") throw new ApiError("config", "The booking service is not configured yet.");
   if (res.status === 0)
     throw new ApiError("network", "We couldn't reach the booking service. It may be starting up — please try again.");

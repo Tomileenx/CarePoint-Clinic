@@ -2,7 +2,7 @@
 const BASE_URL = "https://booking-api-ngrf.onrender.com";
 
 export type ProxyResult =
-  | { ok: true; status: number; body: unknown }
+  | { ok: true; status: number; json: string }
   | { ok: false; status: number; error?: string; code?: string };
 
 export async function callBookingApi(
@@ -25,7 +25,7 @@ export async function callBookingApi(
         ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...init.headers,
       },
-      body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
+      ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
       signal: AbortSignal.timeout(45_000),
     });
   } catch (e) {
@@ -52,5 +52,5 @@ export async function callBookingApi(
       ...(typeof b.code === "string" && b.code.length < 64 ? { code: b.code } : {}),
     };
   }
-  return { ok: true, status: res.status, body };
+  return { ok: true, status: res.status, json: text };
 }
