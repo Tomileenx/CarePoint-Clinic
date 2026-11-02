@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { FindBookingPage } from "@/pages/FindBookingPage";
 
 export const Route = createFileRoute("/find-booking")({
-  validateSearch: (s: Record<string, unknown>): { ref?: string } =>
-    typeof s["ref"] === "string" && s["ref"] ? { ref: s["ref"] } : {},
+  validateSearch: (s: Record<string, unknown>): { ref?: string; email?: string } => ({
+    ...(typeof s["ref"] === "string" && s["ref"] ? { ref: s["ref"] } : {}),
+    ...(typeof s["email"] === "string" && s["email"] ? { email: s["email"] } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Find Your Booking — CarePoint Clinic" },
@@ -16,6 +18,6 @@ export const Route = createFileRoute("/find-booking")({
 });
 
 function FindBookingRoute() {
-  const { ref } = Route.useSearch();
-  return <FindBookingPage {...(ref ? { initialRef: ref } : {})} />;
+  const { ref, email } = Route.useSearch();
+  return <FindBookingPage {...(ref ? { initialRef: ref } : {})} {...(email ? { initialEmail: email } : {})} />;
 }
