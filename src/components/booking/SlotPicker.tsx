@@ -5,30 +5,27 @@ import { formatDate, formatShortDate, formatTime, groupSlotsByDate } from "@/lib
 
 interface Props {
   slots: AppointmentSlot[];
-  selectedId: number | null;
+  selectedId: string | null;
   onSelect: (slot: AppointmentSlot) => void;
 }
 
 export function SlotPicker({ slots, selectedId, onSelect }: Props) {
   const groups = useMemo(() => groupSlotsByDate(slots), [slots]);
-  const withAvailability = groups.filter((g) => g.slots.some((s) => s.available));
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groups.find((g) => g.key === activeKey)) {
-      const selected = slots.find((s) => s.id === selectedId);
-      setActiveKey(
-        selected ? groups.find((g) => g.slots.includes(selected))?.key ?? null : withAvailability[0]?.key ?? groups[0]?.key ?? null,
-      );
+      const firstFree = groups.find((g) => g.slots.some((s) => s.available));
+      setActiveKey(firstFree?.key ?? groups[0]?.key ?? null);
     }
-  }, [groups, activeKey, selectedId, slots, withAvailability]);
+  }, [groups, activeKey]);
 
-  if (withAvailability.length === 0) {
+  if (groups.length === 0) {
     return (
       <div className="flex flex-col items-center rounded-xl border border-dashed bg-card px-6 py-12 text-center">
         <CalendarX2 className="size-10 text-muted-foreground" aria-hidden />
-        <p className="mt-3 font-medium">No appointments available</p>
-        <p className="mt-1 text-sm text-muted-foreground">Please check back later for new openings.</p>
+        <p className="mt-3 font-medium">No appointments on this page</p>
+        <p className="mt-1 text-sm text-muted-foreground">Try another page or check back later for new openings.</p>
       </div>
     );
   }
@@ -53,7 +50,7 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
               }`}
             >
               <span className={`text-sm font-semibold ${isActive ? "text-primary" : "text-foreground"}`}>
-                {formatShortDate(g.slots[0]!.startTime)}
+                {formatShortDate(g.slots[0]!.start)}
               </span>
               <span className="text-xs text-muted-foreground">{free === 0 ? "Fully booked" : `${free} available`}</span>
             </button>
@@ -62,8 +59,8 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
       </div>
 
       <div role="tabpanel" className="mt-4">
-        <h3 className="mb-3 text-sm font-medium text-muted-foreground">{formatDate(active.slots[0]!.startTime)}</h3>
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        <h3 className="mb-3 text-sm font-medium text-muted-foreground">{formatDate(active.slots[0]!.start)}</h3>
+        <ul className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 lg:grid-cols-3">
           {active.slots.map((s) => {
             const selected = s.id === selectedId;
             return (
@@ -72,7 +69,7 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
                   type="button"
                   disabled={!s.available}
                   aria-pressed={selected}
-                  aria-label={`${formatDate(s.startTime)} at ${formatTime(s.startTime)}, ${s.available ? "available" : "unavailable"}`}
+                  aria-label={`${formatDate(s.start)} at ${formatTime(s.start)} with ${s.provider}, ${s.available ? "available" : "unavailable"}`}
                   onClick={() => onSelect(s)}
                   className={`relative flex w-full flex-col items-start rounded-lg border px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     selected
@@ -82,7 +79,10 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
                         : "cursor-not-allowed border-dashed bg-muted text-muted-foreground"
                   }`}
                 >
-                  <span className={`font-semibold ${!s.available ? "line-through" : ""}`}>{formatTime(s.startTime)}</span>
+                  <span className={`font-semibold ${!s.available ? "line-through" : ""}`}>
+                    {formatTime(s.start)} – {formatTime(s.end)}
+                  </span>
+                  <span className={`truncate text-xs ${selected ? "text-primary-foreground/90" : "text-muted-foreground"}`}>{s.provider}</span>
                   <span className={`text-xs ${selected ? "text-primary-foreground/80" : s.available ? "text-teal" : ""}`}>
                     {selected ? "Selected" : s.available ? "Available" : "Booked"}
                   </span>

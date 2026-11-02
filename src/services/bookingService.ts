@@ -1,51 +1,49 @@
 import type {
-  AppointmentSlot,
+  BookingPage,
   BookingRequest,
   BookingResponse,
-  PaginatedBookingResponse,
+  SlotPage,
+  SlotSort,
 } from "@/types/booking";
-import { mockBookingService } from "@/mocks/mockBookingService";
-import { ApiError, apiRequest } from "./apiClient";
-import { isMockMode } from "./config";
-
-export interface BookingService {
-  listSlots(): Promise<AppointmentSlot[]>;
-  createBooking(req: BookingRequest): Promise<BookingResponse>;
-  getBooking(id: string): Promise<BookingResponse>;
-  /** Returns the updated booking, or null when the API replies 204 with no body. */
-  cancelBooking(id: string): Promise<BookingResponse | null>;
-  /** For authorized clinic/admin views only — not used by public pages. */
-  listBookings(page?: number, size?: number): Promise<PaginatedBookingResponse>;
-}
+import {
+  proxyCancelBooking,
+  proxyCreateBooking,
+  proxyGetBooking,
+  proxyListBookings,
+  proxyListSlots,
+} from "@/lib/booking-api.functions";
+import { ApiError, unwrap } from "./apiClient";
 
 function required<T>(value: T | undefined): T {
-  if (value === undefined) throw new ApiError("server", "The booking service returned an empty response.");
+  if (value === undefined || value === null) throw new ApiError("server", "The booking service returned an empty response.");
   return value;
 }
 
-const httpBookingService: BookingService = {
-  async listSlots() {
-    return required(await apiRequest<AppointmentSlot[]>("/slots"));
+export function isBookingResponse(v: unknown): v is BookingResponse {
+  return !!v && typeof v === "object" && typeof (v as BookingResponse).id === "string";
+}
+
+export const bookingService = {
+  async listSlots(page: number, size: number, sort: SlotSort): Promise<SlotPage> {
+    return required(await unwrap<SlotPage>(proxyListSlots({ data: { page, size, sort } })));
   },
-  async createBooking(req) {
+  /**
+   * The spec documents no success schema for POST /bookings, so the body is returned
+   * only if it looks like a BookingResponse; otherwise null.
+   */
+  async createBooking(req: BookingRequest, idempotencyKey: string): Promise<BookingResponse | null> {
+    const body = await unwrap<unknown>(proxyCreateBooking({ data: { ...req, idempotencyKey } }));
+    return isBookingResponse(body) ? body : null;
+  },
+  async getBooking(id: string): Promise<BookingResponse> {
+    return required(await unwrap<BookingResponse>(proxyGetBooking({ data: { id } })));
+  },
+  async cancelBooking(id: string): Promise<BookingResponse> {
+    return required(await unwrap<BookingResponse>(proxyCancelBooking({ data: { id } })));
+  },
+  async listBookings(email: string, limit: number, cursor?: string): Promise<BookingPage> {
     return required(
-      await apiRequest<BookingResponse>("/bookings", { method: "POST", body: JSON.stringify(req) }),
-    );
-  },
-  async getBooking(id) {
-    return required(await apiRequest<BookingResponse>(`/bookings/${encodeURIComponent(id)}`));
-  },
-  async cancelBooking(id) {
-    const res = await apiRequest<BookingResponse>(`/bookings/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
-    return res ?? null;
-  },
-  async listBookings(page = 0, size = 10) {
-    return required(
-      await apiRequest<PaginatedBookingResponse>(`/bookings?page=${page}&size=${size}`),
+      await unwrap<BookingPage>(proxyListBookings({ data: { email, limit, ...(cursor ? { cursor } : {}) } })),
     );
   },
 };
-
-export const bookingService: BookingService = isMockMode ? mockBookingService : httpBookingService;
