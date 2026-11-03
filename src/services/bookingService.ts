@@ -1,9 +1,8 @@
 import type {
+  AppointmentSlot,
   BookingPage,
   BookingRequest,
   BookingResponse,
-  SlotPage,
-  SlotSort,
 } from "@/types/booking";
 import {
   proxyCancelBooking,
@@ -24,8 +23,9 @@ export function isBookingResponse(v: unknown): v is BookingResponse {
 }
 
 export const bookingService = {
-  async listSlots(page: number, size: number, sort: SlotSort): Promise<SlotPage> {
-    return required(await unwrap<SlotPage>(proxyListSlots({ data: { page, size, sort } })));
+  async listSlots(provider?: string): Promise<AppointmentSlot[]> {
+    const slots = await unwrap<AppointmentSlot[]>(proxyListSlots({ data: provider ? { provider } : {} }));
+    return slots ?? [];
   },
   /**
    * The spec documents no success schema for POST /bookings, so the body is returned

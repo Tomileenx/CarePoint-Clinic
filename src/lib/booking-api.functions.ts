@@ -5,19 +5,19 @@ import { callBookingApi } from "./booking-api.server";
 // Every input is validated here before anything is forwarded to the backend.
 const idSchema = z.string().trim().min(1).max(128);
 
+// GET /slots returns all slots as a plain array; the only documented parameter
+// is the optional `provider` filter. The backend sorts by (start, id) ascending.
 export const proxyListSlots = createServerFn({ method: "GET" })
   .inputValidator((d) =>
     z
-      .object({
-        page: z.number().int().min(0).max(10_000),
-        size: z.number().int().min(1).max(50),
-        sort: z.enum(["start,asc", "start,desc"]),
-      })
-      .parse(d),
+      .object({ provider: z.string().trim().min(1).max(128).optional() })
+      .parse(d ?? {}),
   )
   .handler(async ({ data }) => {
-    const q = new URLSearchParams({ page: String(data.page), size: String(data.size), sort: data.sort });
-    return callBookingApi(`/slots?${q}`);
+    const q = new URLSearchParams();
+    if (data.provider) q.set("provider", data.provider);
+    const qs = q.toString();
+    return callBookingApi(`/slots${qs ? `?${qs}` : ""}`);
   });
 
 export const proxyCreateBooking = createServerFn({ method: "POST" })

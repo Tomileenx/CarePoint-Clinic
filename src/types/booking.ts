@@ -11,18 +11,7 @@ export interface AppointmentSlot {
   available: boolean;
 }
 
-/** components.schemas.PageAppointmentSlotResponse (fields used by the UI) */
-export interface SlotPage {
-  content: AppointmentSlot[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  numberOfElements: number;
-  first: boolean;
-  last: boolean;
-  empty: boolean;
-}
+/** GET /slots returns a plain array of AppointmentSlotResponse (no pagination). */
 
 /** components.schemas.BookingRequest */
 export interface BookingRequest {
@@ -53,7 +42,3 @@ export interface ApiErrorResponse {
   code?: string;
   now?: string;
 }
-
-/** Only `start` is a documented sort property (spec default: start,ASC). */
-export const SLOT_SORTS = ["start,asc", "start,desc"] as const;
-export type SlotSort = (typeof SLOT_SORTS)[number];
