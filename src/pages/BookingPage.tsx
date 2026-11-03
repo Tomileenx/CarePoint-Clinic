@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CalendarCheck, CheckCircle2, ChevronLeft, ChevronRight, Clock, Loader2, Search } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, CalendarCheck, CheckCircle2, Clock, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,9 @@ import { bookingService } from "@/services/bookingService";
 import { ApiError } from "@/services/apiClient";
 import { IdempotencyKeys } from "@/lib/idempotency";
 import { formatDate, formatTime, validateBooking, type BookingFormErrors, type BookingFormValues } from "@/lib/booking-utils";
-import type { AppointmentSlot, BookingRequest, BookingResponse, SlotSort } from "@/types/booking";
+import type { AppointmentSlot, BookingRequest, BookingResponse } from "@/types/booking";
 
 export const slotsQueryKey = ["slots"] as const;
-const PAGE_SIZES = [8, 16, 24] as const;
 
 interface Confirmed {
   booking: BookingResponse | null;
@@ -25,13 +24,9 @@ interface Confirmed {
 
 export function BookingPage() {
   const qc = useQueryClient();
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState<number>(8);
-  const [sort, setSort] = useState<SlotSort>("start,asc");
   const slotsQuery = useQuery({
-    queryKey: [...slotsQueryKey, page, size, sort],
-    queryFn: () => bookingService.listSlots(page, size, sort),
-    placeholderData: keepPreviousData,
+    queryKey: slotsQueryKey,
+    queryFn: () => bookingService.listSlots(),
     retry: false,
   });
   const [selected, setSelected] = useState<AppointmentSlot | null>(null);
