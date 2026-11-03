@@ -20,9 +20,17 @@ export function validateBooking(values: BookingFormValues, slotId: string | null
   return errors;
 }
 
+/**
+ * The backend sends appointment times as wall-clock clinic times with a "Z"
+ * suffix (e.g. 09:00:00Z means the 9:00 AM appointment, not 9:00 UTC as an
+ * instant). Formatting in UTC preserves the backend's clock time exactly, so
+ * every visitor sees the real appointment time regardless of their timezone.
+ */
+const CLINIC_TIME_ZONE = "UTC";
+
 export function dateKey(iso: string) {
   const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
 /** Groups slots by day, preserving the order the API returned them in. */
@@ -37,10 +45,10 @@ export function groupSlotsByDate(slots: AppointmentSlot[]) {
 }
 
 export const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  new Date(iso).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: CLINIC_TIME_ZONE });
 export const formatShortDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  new Date(iso).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", timeZone: CLINIC_TIME_ZONE });
 export const formatTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", timeZone: CLINIC_TIME_ZONE });
 export const formatDateTime = (iso: string) =>
-  new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short", timeZone: CLINIC_TIME_ZONE });
