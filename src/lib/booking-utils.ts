@@ -49,6 +49,6 @@ export const formatDate = (iso: string) =>
 export const formatShortDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", timeZone: CLINIC_TIME_ZONE });
 export const formatTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", timeZone: CLINIC_TIME_ZONE });
+  new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: CLINIC_TIME_ZONE });
 export const formatDateTime = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short", timeZone: CLINIC_TIME_ZONE });
