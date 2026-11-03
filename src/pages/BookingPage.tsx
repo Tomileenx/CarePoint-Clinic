@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CalendarCheck, CheckCircle2, ChevronLeft, ChevronRight, Clock, Loader2, Search } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, CalendarCheck, CheckCircle2, Clock, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,9 @@ import { bookingService } from "@/services/bookingService";
 import { ApiError } from "@/services/apiClient";
 import { IdempotencyKeys } from "@/lib/idempotency";
 import { formatDate, formatTime, validateBooking, type BookingFormErrors, type BookingFormValues } from "@/lib/booking-utils";
-import type { AppointmentSlot, BookingRequest, BookingResponse, SlotSort } from "@/types/booking";
+import type { AppointmentSlot, BookingRequest, BookingResponse } from "@/types/booking";
 
 export const slotsQueryKey = ["slots"] as const;
-const PAGE_SIZES = [8, 16, 24] as const;
 
 interface Confirmed {
   booking: BookingResponse | null;
@@ -25,13 +24,9 @@ interface Confirmed {
 
 export function BookingPage() {
   const qc = useQueryClient();
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState<number>(8);
-  const [sort, setSort] = useState<SlotSort>("start,asc");
   const slotsQuery = useQuery({
-    queryKey: [...slotsQueryKey, page, size, sort],
-    queryFn: () => bookingService.listSlots(page, size, sort),
-    placeholderData: keepPreviousData,
+    queryKey: slotsQueryKey,
+    queryFn: () => bookingService.listSlots(),
     retry: false,
   });
   const [selected, setSelected] = useState<AppointmentSlot | null>(null);
@@ -102,29 +97,6 @@ export function BookingPage() {
               <Clock className="size-5 text-primary" aria-hidden /> Available slots
               {slotsQuery.isFetching && !slotsQuery.isPending && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label="Updating" />}
             </h2>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <label className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Sort</span>
-                <select
-                  value={sort}
-                  onChange={(e) => { setSort(e.target.value as SlotSort); setPage(0); }}
-                  className="h-9 rounded-md border bg-card px-2"
-                >
-                  <option value="start,asc">Earliest first</option>
-                  <option value="start,desc">Latest first</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Per page</span>
-                <select
-                  value={size}
-                  onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
-                  className="h-9 rounded-md border bg-card px-2"
-                >
-                  {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </label>
-            </div>
           </div>
 
           {slotsQuery.isPending ? (
@@ -138,22 +110,9 @@ export function BookingPage() {
           ) : data ? (
             <>
               {slotsQuery.isError && (
-                <div className="mb-4"><ErrorNotice title="Couldn't load that page" error={slotsQuery.error} onRetry={() => slotsQuery.refetch()} /></div>
+                <div className="mb-4"><ErrorNotice title="Couldn't refresh slots" error={slotsQuery.error} onRetry={() => slotsQuery.refetch()} /></div>
               )}
-              <SlotPicker slots={data.content ?? []} selectedId={selected?.id ?? null} onSelect={selectSlot} />
-              {data.totalPages > 1 && (
-                <nav aria-label="Slot pages" className="mt-6 flex items-center justify-between gap-2">
-                  <Button variant="outline" size="sm" disabled={data.first || slotsQuery.isFetching} onClick={() => setPage((p) => Math.max(0, p - 1))}>
-                    <ChevronLeft /> Previous
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {data.number + 1} of {data.totalPages} · {data.totalElements} slots
-                  </span>
-                  <Button variant="outline" size="sm" disabled={data.last || slotsQuery.isFetching} onClick={() => setPage((p) => p + 1)}>
-                    Next <ChevronRight />
-                  </Button>
-                </nav>
-              )}
+              <SlotPicker slots={data} selectedId={selected?.id ?? null} onSelect={selectSlot} />
             </>
           ) : null}
         </section>
