@@ -97,29 +97,6 @@ export function BookingPage() {
               <Clock className="size-5 text-primary" aria-hidden /> Available slots
               {slotsQuery.isFetching && !slotsQuery.isPending && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label="Updating" />}
             </h2>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <label className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Sort</span>
-                <select
-                  value={sort}
-                  onChange={(e) => { setSort(e.target.value as SlotSort); setPage(0); }}
-                  className="h-9 rounded-md border bg-card px-2"
-                >
-                  <option value="start,asc">Earliest first</option>
-                  <option value="start,desc">Latest first</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Per page</span>
-                <select
-                  value={size}
-                  onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
-                  className="h-9 rounded-md border bg-card px-2"
-                >
-                  {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </label>
-            </div>
           </div>
 
           {slotsQuery.isPending ? (
