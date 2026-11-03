@@ -24,8 +24,8 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
     return (
       <div className="flex flex-col items-center rounded-xl border border-dashed bg-card px-6 py-12 text-center">
         <CalendarX2 className="size-10 text-muted-foreground" aria-hidden />
-        <p className="mt-3 font-medium">No appointments on this page</p>
-        <p className="mt-1 text-sm text-muted-foreground">Try another page or check back later for new openings.</p>
+        <p className="mt-3 font-medium">No appointments available</p>
+        <p className="mt-1 text-sm text-muted-foreground">Please check back later for new openings.</p>
       </div>
     );
   }

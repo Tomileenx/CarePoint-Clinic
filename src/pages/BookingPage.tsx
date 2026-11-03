@@ -110,22 +110,9 @@ export function BookingPage() {
           ) : data ? (
             <>
               {slotsQuery.isError && (
-                <div className="mb-4"><ErrorNotice title="Couldn't load that page" error={slotsQuery.error} onRetry={() => slotsQuery.refetch()} /></div>
+                <div className="mb-4"><ErrorNotice title="Couldn't refresh slots" error={slotsQuery.error} onRetry={() => slotsQuery.refetch()} /></div>
               )}
-              <SlotPicker slots={data.content ?? []} selectedId={selected?.id ?? null} onSelect={selectSlot} />
-              {data.totalPages > 1 && (
-                <nav aria-label="Slot pages" className="mt-6 flex items-center justify-between gap-2">
-                  <Button variant="outline" size="sm" disabled={data.first || slotsQuery.isFetching} onClick={() => setPage((p) => Math.max(0, p - 1))}>
-                    <ChevronLeft /> Previous
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {data.number + 1} of {data.totalPages} · {data.totalElements} slots
-                  </span>
-                  <Button variant="outline" size="sm" disabled={data.last || slotsQuery.isFetching} onClick={() => setPage((p) => p + 1)}>
-                    Next <ChevronRight />
-                  </Button>
-                </nav>
-              )}
+              <SlotPicker slots={data} selectedId={selected?.id ?? null} onSelect={selectSlot} />
             </>
           ) : null}
         </section>
