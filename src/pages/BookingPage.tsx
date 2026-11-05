@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CalendarCheck, CheckCircle2, Clock, Loader2, Search } from "lucide-react";
@@ -17,7 +17,7 @@ import type { AppointmentSlot, BookingRequest, BookingResponse } from "@/types/b
 export const slotsQueryKey = ["slots"] as const;
 
 interface Confirmed {
-  booking: BookingResponse | null;
+  booking: BookingResponse;
   slot: AppointmentSlot;
   request: BookingRequest;
 }
@@ -28,6 +28,8 @@ export function BookingPage() {
     queryKey: slotsQueryKey,
     queryFn: () => bookingService.listSlots(),
     retry: false,
+    refetchInterval: 30_000,
+    refetchOnMount: "always",
   });
   const [selected, setSelected] = useState<AppointmentSlot | null>(null);
   const [values, setValues] = useState<BookingFormValues>({ name: "", email: "" });
@@ -45,7 +47,9 @@ export function BookingPage() {
       setConfirmed({ booking, slot, request: req });
       setSelected(null);
       setValues({ name: "", email: "" });
+      qc.setQueryData<AppointmentSlot[]>(slotsQueryKey, (slots) => slots?.map((s) => s.id === booking.slotId ? { ...s, available: false } : s));
       qc.invalidateQueries({ queryKey: slotsQueryKey });
+      qc.invalidateQueries({ queryKey: ["bookings"] });
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
     onError: (err) => {
@@ -56,7 +60,16 @@ export function BookingPage() {
     },
   });
 
+  useEffect(() => {
+    if (selected && slotsQuery.data && !slotsQuery.data.some((s) => s.id === selected.id && s.available)) {
+      setSelected(null);
+      setErrors((e) => ({ ...e, slot: "That appointment is no longer available. Please select another time." }));
+    }
+  }, [selected, slotsQuery.data]);
+
   const selectSlot = (s: AppointmentSlot) => {
+    if (!s.available || create.isPending) return;
+    keys.current.reset();
     setSelected(s);
     setErrors((e) => ({ ...e, slot: undefined }));
     create.reset();
@@ -144,7 +157,6 @@ export function BookingPage() {
                 <Input
                   id="name"
                   autoComplete="name"
-                  maxLength={200}
                   value={values.name}
                   aria-invalid={!!errors.name}
                   aria-describedby={errors.name ? "name-error" : undefined}
@@ -159,7 +171,6 @@ export function BookingPage() {
                   id="email"
                   type="email"
                   autoComplete="email"
-                  maxLength={254}
                   value={values.email}
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? "email-error" : undefined}
@@ -200,24 +211,24 @@ function Confirmation({ data, onBack }: { data: Confirmed; onBack: () => void })
           </span>
           <h1 className="mt-4 font-display text-3xl font-medium">Your appointment is booked</h1>
           <p className="mt-2 text-muted-foreground">
-            {booking ? "Keep your booking reference to look up or cancel this appointment." : "You can find this booking later using your email address."}
+            Keep your booking reference to look up or cancel this appointment.
           </p>
         </div>
         <dl className="mt-6 divide-y">
-          {booking && <DetailRow label="Booking reference" value={<span className="break-all font-mono">{booking.id}</span>} />}
-          <DetailRow label="Patient" value={booking?.name ?? request.name} />
-          <DetailRow label="Email" value={booking?.email ?? request.email} />
+          <DetailRow label="Booking reference" value={<span className="break-all font-mono">{booking.id}</span>} />
+          <DetailRow label="Patient" value={booking.name} />
+          <DetailRow label="Email" value={booking.email} />
           <DetailRow label="Date" value={formatDate(slot.start)} />
           <DetailRow label="Time" value={`${formatTime(slot.start)} – ${formatTime(slot.end)}`} />
           <DetailRow label="Provider" value={slot.provider} />
-          {booking && <DetailRow label="Status" value={<StatusBadge status={booking.status} />} />}
+          <DetailRow label="Status" value={<StatusBadge status={booking.status} />} />
         </dl>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <Button variant="outline" className="flex-1" onClick={onBack}>
             <ArrowLeft /> Back to available slots
           </Button>
           <Button asChild className="flex-1">
-            <Link to="/find-booking" search={booking ? { ref: booking.id } : { email: request.email }}>
+            <Link to="/find-booking" search={{ ref: booking.id }}>
               <Search /> Look up booking
             </Link>
           </Button>

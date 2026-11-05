@@ -12,6 +12,8 @@ export const Route = createFileRoute("/find-booking")({
       { name: "description", content: "Look up or cancel a CarePoint Clinic appointment with your booking reference." },
       { property: "og:title", content: "Find Your Booking — CarePoint Clinic" },
       { property: "og:description", content: "Look up or cancel a CarePoint Clinic appointment with your booking reference." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: FindBookingRoute,
