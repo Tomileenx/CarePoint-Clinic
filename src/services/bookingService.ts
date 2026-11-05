@@ -11,39 +11,23 @@ import {
   proxyListBookings,
   proxyListSlots,
 } from "@/lib/booking-api.functions";
-import { ApiError, unwrap } from "./apiClient";
-
-function required<T>(value: T | undefined): T {
-  if (value === undefined || value === null) throw new ApiError("server", "The booking service returned an empty response.");
-  return value;
-}
-
-export function isBookingResponse(v: unknown): v is BookingResponse {
-  return !!v && typeof v === "object" && typeof (v as BookingResponse).id === "string";
-}
+import { unwrap } from "./apiClient";
+import { slotSchema, bookingResponseSchema, bookingPageSchema } from "@/lib/booking-schemas";
 
 export const bookingService = {
   async listSlots(provider?: string): Promise<AppointmentSlot[]> {
-    const slots = await unwrap<AppointmentSlot[]>(proxyListSlots({ data: provider ? { provider } : {} }));
-    return slots ?? [];
+    return unwrap(proxyListSlots({ data: provider ? { provider } : {} }), slotSchema.array(), 200);
   },
-  /**
-   * The spec documents no success schema for POST /bookings, so the body is returned
-   * only if it looks like a BookingResponse; otherwise null.
-   */
-  async createBooking(req: BookingRequest, idempotencyKey: string): Promise<BookingResponse | null> {
-    const body = await unwrap<unknown>(proxyCreateBooking({ data: { ...req, idempotencyKey } }));
-    return isBookingResponse(body) ? body : null;
+  async createBooking(req: BookingRequest, idempotencyKey: string): Promise<BookingResponse> {
+    return unwrap(proxyCreateBooking({ data: { ...req, idempotencyKey } }), bookingResponseSchema, 201);
   },
   async getBooking(id: string): Promise<BookingResponse> {
-    return required(await unwrap<BookingResponse>(proxyGetBooking({ data: { id } })));
+    return unwrap(proxyGetBooking({ data: { id } }), bookingResponseSchema, 200);
   },
   async cancelBooking(id: string): Promise<BookingResponse> {
-    return required(await unwrap<BookingResponse>(proxyCancelBooking({ data: { id } })));
+    return unwrap(proxyCancelBooking({ data: { id } }), bookingResponseSchema, 200);
   },
   async listBookings(email: string, limit: number, cursor?: string): Promise<BookingPage> {
-    return required(
-      await unwrap<BookingPage>(proxyListBookings({ data: { email, limit, ...(cursor ? { cursor } : {}) } })),
-    );
+    return unwrap(proxyListBookings({ data: { email, limit, ...(cursor ? { cursor } : {}) } }), bookingPageSchema, 200);
   },
 };

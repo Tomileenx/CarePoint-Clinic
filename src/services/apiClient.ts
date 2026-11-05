@@ -1,4 +1,5 @@
 import type { ProxyResult } from "@/lib/booking-api.server";
+import type { z } from "zod";
 
 export type ApiErrorKind =
   | "config"
@@ -55,19 +56,24 @@ export function errorFromStatus(status: number, apiMessage?: string, code?: stri
 }
 
 /** Unwraps a proxy result into data or a typed ApiError. All error mapping lives here. */
-export async function unwrap<T>(call: Promise<ProxyResult>): Promise<T | undefined> {
+export async function unwrap<T>(call: Promise<ProxyResult>, schema: z.ZodType<T>, expectedStatus: number): Promise<T> {
   let res: ProxyResult;
   try {
     res = await call;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === "ZodError")
+      throw new ApiError("validation", "Some details were not accepted. Please check and try again.", 400);
     throw new ApiError("network", "We couldn't reach the booking service. Check your connection and try again.");
   }
   if (res.ok) {
-    if (!res.json) return undefined;
+    if (res.status !== expectedStatus)
+      throw new ApiError("server", "The booking service returned an unexpected response status.", res.status);
     try {
-      return JSON.parse(res.json) as T;
+      const result = schema.safeParse(JSON.parse(res.json));
+      if (!result.success) throw new Error("Invalid response");
+      return result.data;
     } catch {
-      throw new ApiError("server", "The booking service returned an unreadable response.");
+      throw new ApiError("server", "The booking service returned an incomplete or unreadable response.");
     }
   }
   if (res.code === "CONFIG") throw new ApiError("config", "The booking service is not configured yet.");

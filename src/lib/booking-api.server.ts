@@ -27,9 +27,10 @@ export async function callBookingApi(
       },
       ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
       signal: AbortSignal.timeout(45_000),
+      cache: "no-store",
     });
-  } catch (e) {
-    console.error("Booking API unreachable", path, e);
+  } catch {
+    console.error("Booking API unreachable");
     return { ok: false, status: 0, code: "NETWORK" };
   }
 
@@ -43,7 +44,7 @@ export async function callBookingApi(
 
   if (!res.ok) {
     const b = (body && typeof body === "object" ? body : {}) as { error?: unknown; code?: unknown };
-    console.error("Booking API error", res.status, path, b.code);
+    console.error("Booking API error", res.status);
     return {
       ok: false,
       status: res.status,
