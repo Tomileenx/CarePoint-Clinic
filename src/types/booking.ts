@@ -33,7 +33,7 @@ export interface BookingResponse {
 /** components.schemas.BookingPage */
 export interface BookingPage {
   items: BookingResponse[];
-  next_cursor?: string | null;
+  next_cursor?: string | null | undefined;
 }
 
 /** components.schemas.ErrorResponse */

@@ -2,20 +2,21 @@ import { describe, expect, it } from "vitest";
 import { dateKey, formatTime, groupSlotsByDate } from "@/lib/booking-utils";
 import type { AppointmentSlot } from "@/types/booking";
 
-// The backend sends appointment wall-clock times with a "Z" suffix:
-// "2026-11-02T09:00:00Z" is the 9:00 AM appointment. The UI must show that
-// clock time exactly, in any viewer timezone (run with TZ=Africa/Lagos too).
+// Nigeria uses Africa/Lagos, UTC+1; ISO Z timestamps are UTC instants.
 describe("appointment time display", () => {
-  it("shows the backend's 09:00 slot as 09:00, not shifted by timezone", () => {
-    expect(formatTime("2026-11-02T09:00:00Z")).toBe("09:00");
+  it("shows 09:00 UTC as 10:00 Lagos time", () => {
+    expect(formatTime("2026-11-02T09:00:00Z")).toBe("10:00");
   });
 
-  it("shows a 16:30 slot as 16:30", () => {
-    expect(formatTime("2026-11-02T16:30:00Z")).toBe("16:30");
+  it("respects timestamps already carrying the Nigeria offset", () => {
+    expect(formatTime("2026-11-02T16:30:00+01:00")).toBe("16:30");
   });
 
   it("groups slots by the backend's calendar date", () => {
     expect(dateKey("2026-11-02T09:00:00Z")).toBe("2026-11-02");
+  });
+  it("groups UTC evening slots into the next Lagos calendar day", () => {
+    expect(dateKey("2026-11-02T23:30:00Z")).toBe("2026-11-03");
   });
 
   it("keeps the backend's slot order when grouping", () => {
@@ -33,6 +34,6 @@ describe("appointment time display", () => {
     ];
     const groups = groupSlotsByDate(slots);
     expect(groups.map((g) => g.key)).toEqual(["2026-11-02", "2026-11-03"]);
-    expect(groups[0]!.slots.map((s) => s.id)).toEqual(["a", "b"]);
+    expect(groups[0]?.slots.map((s) => s.id)).toEqual(["a", "b"]);
   });
 });

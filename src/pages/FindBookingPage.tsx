@@ -34,7 +34,10 @@ export function FindBookingPage({ initialRef, initialEmail }: { initialRef?: str
     enabled: !!searchEmail,
     retry: false,
     initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam }) => bookingService.listBookings(searchEmail!, 10, pageParam),
+    queryFn: ({ pageParam }) => {
+      if (!searchEmail) throw new Error("An email is required.");
+      return bookingService.listBookings(searchEmail, 10, pageParam);
+    },
     getNextPageParam: (last) => last.next_cursor || undefined,
   });
 
@@ -50,7 +53,9 @@ export function FindBookingPage({ initialRef, initialEmail }: { initialRef?: str
     e.preventDefault();
     if (!isValidEmail(email)) return setEmailError("Please enter a valid email address.");
     setEmailError(null);
-    setSearchEmail(email.trim());
+    const nextEmail = email.trim();
+    if (nextEmail === searchEmail) list.refetch();
+    else setSearchEmail(nextEmail);
   };
 
   useEffect(() => {
@@ -77,7 +82,7 @@ export function FindBookingPage({ initialRef, initialEmail }: { initialRef?: str
         <form noValidate onSubmit={search} className="rounded-2xl border bg-card p-6 shadow-soft">
           <Label htmlFor="reference">Booking reference</Label>
           <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
-            <Input id="reference" value={reference} maxLength={128} onChange={(e) => setReference(e.target.value)}
+            <Input id="reference" value={reference} onChange={(e) => setReference(e.target.value)}
               aria-invalid={!!inputError} className="h-10 font-mono" />
             <Button type="submit" size="lg" disabled={lookup.isPending}>
               {lookup.isPending ? <Loader2 className="animate-spin" /> : <Search />} Find booking
@@ -101,7 +106,7 @@ export function FindBookingPage({ initialRef, initialEmail }: { initialRef?: str
         <form noValidate onSubmit={searchByEmail} className="rounded-2xl border bg-card p-6 shadow-soft">
           <Label htmlFor="lookup-email">Email address</Label>
           <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
-            <Input id="lookup-email" type="email" value={email} maxLength={254} onChange={(e) => setEmail(e.target.value)}
+            <Input id="lookup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
               aria-invalid={!!emailError} className="h-10" />
             <Button type="submit" size="lg" variant="outline" disabled={list.isFetching && !list.isFetchingNextPage}>
               <Search /> Show my bookings
@@ -144,7 +149,8 @@ function BookingCard({ booking, onChange }: { booking: BookingResponse; onChange
     onSuccess: (b) => {
       setCancelled(true);
       onChange(b);
-      qc.invalidateQueries({ queryKey: slotsQueryKey });
+      qc.invalidateQueries({ queryKey: slotsQueryKey, refetchType: "all" });
+      qc.invalidateQueries({ queryKey: ["bookings"] });
     },
   });
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarX2, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { AppointmentSlot } from "@/types/booking";
 import { formatDate, formatShortDate, formatTime, groupSlotsByDate } from "@/lib/booking-utils";
 
@@ -30,7 +31,9 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
     );
   }
 
-  const active = groups.find((g) => g.key === activeKey) ?? groups[0]!;
+  const active = groups.find((g) => g.key === activeKey) ?? groups[0];
+  const first = active?.slots[0];
+  if (!active || !first) return null;
 
   return (
     <div>
@@ -38,40 +41,44 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
         {groups.map((g) => {
           const free = g.slots.filter((s) => s.available).length;
           const isActive = g.key === active.key;
+          const firstSlot = g.slots[0];
+          if (!firstSlot) return null;
           return (
-            <button
+            <Button
+              variant="outline"
               key={g.key}
               role="tab"
               type="button"
               aria-selected={isActive}
               onClick={() => setActiveKey(g.key)}
-              className={`flex min-w-28 shrink-0 flex-col rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              className={`flex h-auto min-w-28 shrink-0 flex-col items-start gap-0 rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 isActive ? "border-primary bg-secondary" : "bg-card hover:border-primary/40"
               }`}
             >
               <span className={`text-sm font-semibold ${isActive ? "text-primary" : "text-foreground"}`}>
-                {formatShortDate(g.slots[0]!.start)}
+                {formatShortDate(firstSlot.start)}
               </span>
               <span className="text-xs text-muted-foreground">{free === 0 ? "Fully booked" : `${free} available`}</span>
-            </button>
+            </Button>
           );
         })}
       </div>
 
       <div role="tabpanel" className="mt-4">
-        <h3 className="mb-3 text-sm font-medium text-muted-foreground">{formatDate(active.slots[0]!.start)}</h3>
+        <h3 className="mb-3 text-sm font-medium text-muted-foreground">{formatDate(first.start)} · Lagos time</h3>
         <ul className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 lg:grid-cols-3">
           {active.slots.map((s) => {
             const selected = s.id === selectedId;
             return (
               <li key={s.id}>
-                <button
+                <Button
+                  variant="outline"
                   type="button"
                   disabled={!s.available}
                   aria-pressed={selected}
                   aria-label={`${formatDate(s.start)} at ${formatTime(s.start)} with ${s.provider}, ${s.available ? "available" : "unavailable"}`}
                   onClick={() => onSelect(s)}
-                  className={`relative flex w-full flex-col items-start rounded-lg border px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  className={`relative flex h-auto w-full flex-col items-start gap-0 rounded-lg border px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     selected
                       ? "border-primary bg-primary text-primary-foreground shadow-soft"
                       : s.available
@@ -87,7 +94,7 @@ export function SlotPicker({ slots, selectedId, onSelect }: Props) {
                     {selected ? "Selected" : s.available ? "Available" : "Booked"}
                   </span>
                   {selected && <Check className="absolute right-2 top-2 size-4" aria-hidden />}
-                </button>
+                </Button>
               </li>
             );
           })}

@@ -13,7 +13,6 @@ export const isValidEmail = (e: string) => EMAIL_RE.test(e.trim());
 export function validateBooking(values: BookingFormValues, slotId: string | null): BookingFormErrors {
   const errors: BookingFormErrors = {};
   if (!values.name.trim()) errors.name = "Please enter your full name.";
-  else if (values.name.trim().length > 200) errors.name = "Name is too long.";
   if (!values.email.trim()) errors.email = "Please enter your email address.";
   else if (!isValidEmail(values.email)) errors.email = "Please enter a valid email address.";
   if (slotId === null) errors.slot = "Please select an appointment slot.";
@@ -21,16 +20,15 @@ export function validateBooking(values: BookingFormValues, slotId: string | null
 }
 
 /**
- * The backend sends appointment times as wall-clock clinic times with a "Z"
- * suffix (e.g. 09:00:00Z means the 9:00 AM appointment, not 9:00 UTC as an
- * instant). Formatting in UTC preserves the backend's clock time exactly, so
- * every visitor sees the real appointment time regardless of their timezone.
+ * ISO timestamps represent instants. Render and group them in the clinic's
+ * timezone, independent of the visitor's location (including date rollover).
  */
-const CLINIC_TIME_ZONE = "UTC";
+export const CLINIC_TIME_ZONE = "Africa/Lagos";
 
 export function dateKey(iso: string) {
-  const d = new Date(iso);
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: CLINIC_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(iso));
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
 /** Groups slots by day, preserving the order the API returned them in. */
@@ -38,8 +36,9 @@ export function groupSlotsByDate(slots: AppointmentSlot[]) {
   const groups = new Map<string, AppointmentSlot[]>();
   for (const s of slots) {
     const k = dateKey(s.start);
-    if (!groups.has(k)) groups.set(k, []);
-    groups.get(k)!.push(s);
+    const existing = groups.get(k);
+    if (existing) existing.push(s);
+    else groups.set(k, [s]);
   }
   return [...groups.entries()].map(([key, items]) => ({ key, slots: items }));
 }
